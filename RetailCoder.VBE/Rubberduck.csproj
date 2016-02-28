@@ -707,6 +707,10 @@
       <DependentUpon>BranchesControl.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\SourceControl\BranchesPresenter.cs" />
+    <Compile Include="UI\SourceControl\BranchesView.xaml.cs">
+      <DependentUpon>BranchesView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\SourceControl\BranchesViewViewModel.cs" />
     <Compile Include="UI\SourceControl\ChangesControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -714,6 +718,10 @@
       <DependentUpon>ChangesControl.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\SourceControl\ChangesPresenter.cs" />
+    <Compile Include="UI\SourceControl\ChangesView.xaml.cs">
+      <DependentUpon>ChangesView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\SourceControl\ChangesViewViewModel.cs" />
     <Compile Include="UI\SourceControl\CloneRepositoryForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -742,6 +750,8 @@
     <Compile Include="UI\SourceControl\IBranchesView.cs" />
     <Compile Include="UI\SourceControl\IChangesView.cs" />
     <Compile Include="UI\SourceControl\ICloneRepositoryView.cs" />
+    <Compile Include="UI\SourceControl\IControlView.cs" />
+    <Compile Include="UI\SourceControl\IControlViewModel.cs" />
     <Compile Include="UI\SourceControl\ICreateBranchView.cs" />
     <Compile Include="UI\SourceControl\IDeleteBranchView.cs" />
     <Compile Include="UI\SourceControl\IMergeView.cs" />
@@ -776,6 +786,10 @@
     </Compile>
     <Compile Include="Refactorings\Rename\RenamePresenter.cs" />
     <Compile Include="UI\SourceControl\SettingsPresenter.cs" />
+    <Compile Include="UI\SourceControl\SettingsView.xaml.cs">
+      <DependentUpon>SettingsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\SourceControl\SettingsViewViewModel.cs" />
     <Compile Include="UI\SourceControl\SourceControlBindings.cs" />
     <Compile Include="UI\SourceControl\SourceControlPanel.cs">
       <SubType>UserControl</SubType>
@@ -783,10 +797,19 @@
     <Compile Include="UI\SourceControl\SourceControlPanel.Designer.cs">
       <DependentUpon>SourceControlPanel.cs</DependentUpon>
     </Compile>
+    <Compile Include="UI\SourceControl\SourceControlView.xaml.cs">
+      <DependentUpon>SourceControlView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\SourceControl\SourceControlPresenter.cs" />
     <Compile Include="UI\SourceControl\SourceControlProviderFactory.cs" />
+    <Compile Include="UI\SourceControl\SourceControlViewViewModel.cs" />
+    <Compile Include="UI\SourceControl\SourceControlDockablePresenter.cs" />
     <Compile Include="UI\SourceControl\UnsyncedCommitsPresenter.cs" />
     <Compile Include="UI\Controls\INavigateSelection.cs" />
+    <Compile Include="UI\SourceControl\UnsyncedCommitsView.xaml.cs">
+      <DependentUpon>UnsyncedCommitsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\SourceControl\UnsyncedCommitsViewViewModel.cs" />
     <Compile Include="UI\ToDoItems\IToDoExplorerWindow.cs" />
     <Compile Include="Settings\IConfigurationService.cs" />
     <Compile Include="Settings\ConfigurationLoader.cs" />
@@ -1201,6 +1224,7 @@
     <Resource Include="Resources\folder--plus.png" />
     <Resource Include="Resources\folder-rename.png" />
     <Resource Include="Resources\cross-button.png" />
+    <Resource Include="Resources\init-repo.png" />
     <Content Include="Resources\Microsoft\Mask\AllLoadedTests_8644_24.bmp" />
     <Content Include="Resources\Microsoft\Mask\ExtractMethod_6786_32.bmp" />
     <Content Include="Resources\Microsoft\Mask\FindSymbol_6263_32.bmp" />
@@ -1454,6 +1478,26 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UI\Settings\UnitTestSettings.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\SourceControl\BranchesView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\SourceControl\ChangesView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\SourceControl\SettingsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\SourceControl\SourceControlView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\SourceControl\UnsyncedCommitsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

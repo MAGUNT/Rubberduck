@@ -2700,6 +2700,15 @@ namespace Rubberduck.UI {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Branch Name:.
+        /// </summary>
+        public static string SourceControl_BranchName {
+            get {
+                return ResourceManager.GetString("SourceControl_BranchName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cancel.
         /// </summary>
         public static string SourceControl_CancelGlobalSettings {
@@ -2714,6 +2723,15 @@ namespace Rubberduck.UI {
         public static string SourceControl_Changes {
             get {
                 return ResourceManager.GetString("SourceControl_Changes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Clone Repository.
+        /// </summary>
+        public static string SourceControl_CloneRepoButtonToolTip {
+            get {
+                return ResourceManager.GetString("SourceControl_CloneRepoButtonToolTip", resourceCulture);
             }
         }
         
@@ -2819,9 +2837,9 @@ namespace Rubberduck.UI {
         /// <summary>
         ///   Looks up a localized string similar to Delete branch.
         /// </summary>
-        public static string SourceControl_DeleteBranchButton {
+        public static string SourceControl_DeleteBranch {
             get {
-                return ResourceManager.GetString("SourceControl_DeleteBranchButton", resourceCulture);
+                return ResourceManager.GetString("SourceControl_DeleteBranch", resourceCulture);
             }
         }
         
@@ -2993,15 +3011,6 @@ namespace Rubberduck.UI {
         public static string SourceControl_OpenWorkingDirectory {
             get {
                 return ResourceManager.GetString("SourceControl_OpenWorkingDirectory", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Open Working Directory.
-        /// </summary>
-        public static string SourceControl_OpenWorkingFolderToolTip {
-            get {
-                return ResourceManager.GetString("SourceControl_OpenWorkingFolderToolTip", resourceCulture);
             }
         }
         

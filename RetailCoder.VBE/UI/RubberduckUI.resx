@@ -754,9 +754,6 @@ Are you sure you want to proceed with this rename?</value>
   <data name="SourceControl_InitRepoButtonToolTip" xml:space="preserve">
     <value>Init New Repo from this Project</value>
   </data>
-  <data name="SourceControl_OpenWorkingFolderToolTip" xml:space="preserve">
-    <value>Open Working Directory</value>
-  </data>
   <data name="SourceControl_RefreshButtonToolTip" xml:space="preserve">
     <value>Refreshes pending changes</value>
   </data>
@@ -1038,7 +1035,7 @@ Are you sure you want to proceed with this rename?</value>
   <data name="EncapsulateField_ParameterName" xml:space="preserve">
     <value>Parameter Name:</value>
   </data>
-  <data name="SourceControl_DeleteBranchButton" xml:space="preserve">
+  <data name="SourceControl_DeleteBranch" xml:space="preserve">
     <value>Delete branch</value>
   </data>
   <data name="RefactorMenu_MoveCloserToUsage" xml:space="preserve">
@@ -1341,10 +1338,16 @@ All our stargazers, likers &amp; followers, for the warm fuzzies
     <value>All references: '{0}'</value>
     <comment>0: declaration.identifiername</comment>
   </data>
+  <data name="SourceControl_CloneRepoButtonToolTip" xml:space="preserve">
+    <value>Clone Repository</value>
+  </data>
   <data name="Rubberduck" xml:space="preserve">
     <value>Rubberduck</value>
   </data>
   <data name="SearchResults_MemberType" xml:space="preserve">
     <value>Type</value>
+  </data>
+  <data name="SourceControl_BranchName" xml:space="preserve">
+    <value>Branch Name:</value>
   </data>
 </root>
