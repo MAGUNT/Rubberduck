@@ -1,4 +1,6 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Forms;
 using System.Windows.Input;
 using Microsoft.Vbe.Interop;
@@ -43,13 +45,25 @@ namespace Rubberduck.UI.SourceControl
             _config = _configService.LoadConfiguration();
             _wrapperFactory = wrapperFactory;
 
-            _refreshCommand = new DelegateCommand(_ => Refresh());
             _initRepoCommand = new DelegateCommand(_ => InitRepo());
             _openRepoCommand = new DelegateCommand(_ => OpenRepo());
-            _cloneRepoCommand = new DelegateCommand(_ => CloneRepo());
+            _cloneRepoCommand = new DelegateCommand(_ => ShowCloneRepoGrid());
+            _refreshCommand = new DelegateCommand(_ => Refresh());
+            _dismissErrorMessageCommand = new DelegateCommand(_ => DismissErrorMessage());
 
-            TabItems = new ObservableCollection<IControlView> {changesView, branchesView, unsyncedCommitsView, settingsView};
+            _cloneRepoOkButtonCommand = new DelegateCommand(_ => CloneRepo(), _ => !IsNotValidRemotePath);
+            _cloneRepoCancelButtonCommand = new DelegateCommand(_ => CloseCloneRepoGrid());
+
+            TabItems = new ObservableCollection<IControlView>
+            {
+                changesView,
+                branchesView,
+                unsyncedCommitsView,
+                settingsView
+            };
             Status = RubberduckUI.Offline;
+
+            ListenForErrors();
         }
 
         private ObservableCollection<IControlView> _tabItems;
@@ -80,7 +94,109 @@ namespace Rubberduck.UI.SourceControl
             }
         }
 
-        private void Refresh() { }
+        private bool _displayCloneRepoGrid;
+        public bool DisplayCloneRepoGrid
+        {
+            get { return _displayCloneRepoGrid; }
+            set
+            {
+                if (_displayCloneRepoGrid != value)
+                {
+                    _displayCloneRepoGrid = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string _remotePath;
+        public string RemotePath
+        {
+            get { return _remotePath; }
+            set
+            {
+                if (_remotePath != value)
+                {
+                    _remotePath = value;
+                    LocalDirectory =
+                        _config.DefaultRepositoryLocation +
+                        (_config.DefaultRepositoryLocation.EndsWith("\\") ? string.Empty : "\\") +
+                        _remotePath.Split('/').Last().Replace(".git", string.Empty);
+
+                    OnPropertyChanged();
+                    OnPropertyChanged("IsNotValidRemotePath");
+                }
+            }
+        }
+
+        private string _localDirectory;
+        public string LocalDirectory
+        {
+            get { return _localDirectory; }
+            set
+            {
+                if (_localDirectory != value)
+                {
+                    _localDirectory = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private bool _displayErrorMessageGrid;
+        public bool DisplayErrorMessageGrid
+        {
+            get { return _displayErrorMessageGrid; }
+            set
+            {
+                if (_displayErrorMessageGrid != value)
+                {
+                    _displayErrorMessageGrid = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string _errorMessage;
+        public string ErrorMessage
+        {
+            get { return _errorMessage; }
+            set
+            {
+                if (_errorMessage != value)
+                {
+                    _errorMessage = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool IsNotValidRemotePath
+        {
+            get
+            {
+                Uri uri;
+                return !Uri.TryCreate(RemotePath, UriKind.Absolute, out uri);
+            }
+        }
+
+        private void ListenForErrors()
+        {
+            foreach (var tab in TabItems)
+            {
+                tab.ViewModel.ErrorThrown += ViewModel_ErrorThrown;
+            }
+        }
+
+        private void ViewModel_ErrorThrown(object sender, ErrorEventArgs e)
+        {
+            ErrorMessage = e.Message;
+            DisplayErrorMessageGrid = true;
+        }
+
+        private void DismissErrorMessage()
+        {
+            DisplayErrorMessageGrid = false;
+        }
 
         private void InitRepo()
         {
@@ -145,7 +261,74 @@ namespace Rubberduck.UI.SourceControl
             }
         }
 
-        private void CloneRepo() { }
+        private void CloneRepo()
+        {
+            IRepository repo;
+            try
+            {
+                _provider = _providerFactory.CreateProvider(_vbe.ActiveVBProject);
+                repo = _provider.Clone(RemotePath, LocalDirectory);
+            }
+            catch (SourceControlException ex)
+            {
+                //ShowSecondaryPanel(ex.Message, ex.InnerException.Message);
+                return;
+            }
+
+            AddRepoToConfig((Repository)repo);
+
+            CloseCloneRepoGrid();
+        }
+
+        private void ShowCloneRepoGrid()
+        {
+            DisplayCloneRepoGrid = true;
+        }
+
+        private void CloseCloneRepoGrid()
+        {
+            RemotePath = string.Empty;
+
+            DisplayCloneRepoGrid = false;
+        }
+
+        private void Refresh()
+        {
+            if (!ValidRepoExists())
+            {
+                //_view.Status = RubberduckUI.Offline;
+                return;
+            }
+
+            try
+            {
+                _provider = _providerFactory.CreateProvider(_vbe.ActiveVBProject,
+                    _config.Repositories.First(repo => repo.Name == _vbe.ActiveVBProject.Name), _wrapperFactory);
+
+                SetChildPresenterSourceControlProviders(_provider);
+                Status = RubberduckUI.Online;
+            }
+            catch (SourceControlException ex)
+            {
+                //todo: report failure to user and prompt to create or browse
+            }
+        }
+
+        private bool ValidRepoExists()
+        {
+            if (_config.Repositories == null)
+            {
+                return false;
+            }
+
+            var possibleRepos = _config.Repositories.Where(repo => repo.Name == _vbe.ActiveVBProject.Name);
+
+            var possibleCount = possibleRepos.Count();
+
+            //todo: if none are found, prompt user to create one
+            //todo: more than one are found, prompt for correct one
+            return possibleCount != 0 && possibleCount <= 1;
+        }
 
         private readonly ICommand _refreshCommand;
         public ICommand RefreshCommand
@@ -169,6 +352,33 @@ namespace Rubberduck.UI.SourceControl
         public ICommand CloneRepoCommand
         {
             get { return _cloneRepoCommand; }
+        }
+
+        private readonly ICommand _cloneRepoOkButtonCommand;
+        public ICommand CloneRepoOkButtonCommand
+        {
+            get
+            {
+                return _cloneRepoOkButtonCommand;
+            }
+        }
+
+        private readonly ICommand _cloneRepoCancelButtonCommand;
+        public ICommand CloneRepoCancelButtonCommand
+        {
+            get
+            {
+                return _cloneRepoCancelButtonCommand;
+            }
+        }
+
+        private readonly ICommand _dismissErrorMessageCommand;
+        public ICommand DismissErrorMessageCommand
+        {
+            get
+            {
+                return _dismissErrorMessageCommand;
+            }
         }
     }
 }

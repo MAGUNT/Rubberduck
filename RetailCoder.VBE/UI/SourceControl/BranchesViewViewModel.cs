@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
@@ -11,17 +12,17 @@ namespace Rubberduck.UI.SourceControl
     {
         public BranchesViewViewModel()
         {
-            _newBranchCommand = new DelegateCommand(_ => CreateBranch());
-            _mergeBranchCommand = new DelegateCommand(_ => MergeBranch());
-            _deleteBranchCommand = new DelegateCommand(_ => DeleteBranch());
+            _newBranchCommand = new DelegateCommand(_ => CreateBranch(), _ => Provider != null);
+            _mergeBranchCommand = new DelegateCommand(_ => MergeBranch(), _ => Provider != null);
+            _deleteBranchCommand = new DelegateCommand(_ => DeleteBranch(), _ => Provider != null);
 
-            _createBranchOkButtonCommand = new DelegateCommand(_ => CreateBranchOk());
+            _createBranchOkButtonCommand = new DelegateCommand(_ => CreateBranchOk(), _ => !IsNotValidBranchName);
             _createBranchCancelButtonCommand = new DelegateCommand(_ => CreateBranchCancel());
 
-            _mergeBranchesOkButtonCommand = new DelegateCommand(_ => MergeBranchOk());
+            _mergeBranchesOkButtonCommand = new DelegateCommand(_ => MergeBranchOk(), _ => SourceBranch != DestinationBranch);
             _mergeBranchesCancelButtonCommand = new DelegateCommand(_ => MergeBranchCancel());
 
-            _deleteBranchOkButtonCommand = new DelegateCommand(_ => DeleteBranchOk());
+            _deleteBranchOkButtonCommand = new DelegateCommand(_ => DeleteBranchOk(), _ => Provider != null && Provider.CurrentBranch.Name != BranchToDelete);
             _deleteBranchCancelButtonCommand = new DelegateCommand(_ => DeleteBranchCancel());
         }
 
@@ -38,6 +39,8 @@ namespace Rubberduck.UI.SourceControl
                     new ObservableCollection<string>(
                         Provider.Branches.Where(b => !b.IsRemote && PublishedBranches.All(p => b.Name != p))
                             .Select(b => b.Name));
+
+                CurrentBranch = _provider.CurrentBranch.Name;
             }
         }
 
@@ -93,6 +96,29 @@ namespace Rubberduck.UI.SourceControl
             }
         }
 
+        private string _currentBranch;
+        public string CurrentBranch
+        {
+            get { return _currentBranch; }
+            set
+            {
+                if (_currentBranch != value)
+                {
+                    _currentBranch = value;
+                    OnPropertyChanged();
+
+                    try
+                    {
+                        Provider.Checkout(_currentBranch);
+                    }
+                    catch (SourceControlException ex)
+                    {
+                        RaiseErrorEvent(ex.Message);
+                    }
+                }
+            }
+        }
+
         private bool _displayCreateBranchGrid;
         public bool DisplayCreateBranchGrid
         {
@@ -117,12 +143,12 @@ namespace Rubberduck.UI.SourceControl
                 {
                     _newBranchName = value;
                     OnPropertyChanged();
-                    OnPropertyChanged("IsValidBranchName");
+                    OnPropertyChanged("IsNotValidBranchName");
                 }
             }
         }
 
-        public bool IsValidBranchName
+        public bool IsNotValidBranchName
         {
             get
             {
@@ -366,6 +392,16 @@ namespace Rubberduck.UI.SourceControl
             get
             {
                 return _deleteBranchCancelButtonCommand;
+            }
+        }
+
+        public event EventHandler<ErrorEventArgs> ErrorThrown;
+        private void RaiseErrorEvent(string message)
+        {
+            var handler = ErrorThrown;
+            if (handler != null)
+            {
+                handler(this, new ErrorEventArgs(message));
             }
         }
     }

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
 using System.Windows.Input;
@@ -29,16 +30,11 @@ namespace Rubberduck.UI.SourceControl
             _showFilePickerCommand = new DelegateCommand(_ => ShowFilePicker());
             _cancelSettingsChangesCommand = new DelegateCommand(_ => CancelSettingsChanges());
             _updateSettingsCommand = new DelegateCommand(_ => UpdateSettings());
-            _showGitIgnoreCommand = new DelegateCommand(_ => ShowGitIgnore());
-            _showGitAttributesCommand = new DelegateCommand(_ => ShowGitAttributes());
+            _showGitIgnoreCommand = new DelegateCommand(_ => ShowGitIgnore(), _ => Provider != null);
+            _showGitAttributesCommand = new DelegateCommand(_ => ShowGitAttributes(), _ => Provider != null);
         }
 
-        private ISourceControlProvider _provider;
-        public ISourceControlProvider Provider
-        {
-            get { return _provider; }
-            set { _provider = value; }
-        }
+        public ISourceControlProvider Provider { get; set; }
 
         private string _userName;
         public string UserName
@@ -121,11 +117,6 @@ namespace Rubberduck.UI.SourceControl
 
         private void OpenFileInExternalEditor(GitSettingsFile fileType)
         {
-            if (_provider.CurrentRepository == null)
-            {
-                return;
-            }
-
             var fileName = string.Empty;
             var defaultContents = string.Empty;
             switch (fileType)
@@ -140,7 +131,7 @@ namespace Rubberduck.UI.SourceControl
                     break;
             }
 
-            var repo = _provider.CurrentRepository;
+            var repo = Provider.CurrentRepository;
             var filePath = Path.Combine(repo.LocalLocation, fileName);
 
             if (!File.Exists(filePath))
@@ -193,6 +184,16 @@ namespace Rubberduck.UI.SourceControl
             get
             {
                 return _showGitAttributesCommand;
+            }
+        }
+
+        public event EventHandler<ErrorEventArgs> ErrorThrown;
+        private void RaiseErrorEvent(string message)
+        {
+            var handler = ErrorThrown;
+            if (handler != null)
+            {
+                handler(this, new ErrorEventArgs(message));
             }
         }
     }

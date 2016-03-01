@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Rubberduck.SourceControl;
 using Rubberduck.UI.Command;
@@ -9,18 +10,13 @@ namespace Rubberduck.UI.SourceControl
     {
         public UnsyncedCommitsViewViewModel()
         {
-            _fetchCommitsCommand = new DelegateCommand(_ => FetchCommits());
-            _pullCommitsCommand = new DelegateCommand(_ => PullCommits());
-            _pushCommitsCommand = new DelegateCommand(_ => PushCommits());
-            _syncCommitsCommand = new DelegateCommand(_ => SyncCommits());
+            _fetchCommitsCommand = new DelegateCommand(_ => FetchCommits(), _ => Provider != null);
+            _pullCommitsCommand = new DelegateCommand(_ => PullCommits(), _ => Provider != null);
+            _pushCommitsCommand = new DelegateCommand(_ => PushCommits(), _ => Provider != null);
+            _syncCommitsCommand = new DelegateCommand(_ => SyncCommits(), _ => Provider != null);
         }
 
-        private ISourceControlProvider _provider;
-        public ISourceControlProvider Provider
-        {
-            get { return _provider; }
-            set { _provider = value; }
-        }
+        public ISourceControlProvider Provider { get; set; }
 
         private ObservableCollection<ICommit> _incomingCommits;
         public ObservableCollection<ICommit> IncomingCommits
@@ -52,18 +48,54 @@ namespace Rubberduck.UI.SourceControl
 
         private void FetchCommits()
         {
+            try
+            {
+                Provider.Push();
+
+                IncomingCommits = new ObservableCollection<ICommit>(Provider.UnsyncedRemoteCommits);
+                OutgoingCommits = new ObservableCollection<ICommit>(Provider.UnsyncedLocalCommits);
+            }
+            catch (SourceControlException ex)
+            {
+                RaiseErrorEvent(ex.Message);
+            }
         }
 
         private void PullCommits()
         {
+            try
+            {
+                Provider.Pull();
+            }
+            catch (SourceControlException ex)
+            {
+                RaiseErrorEvent(ex.Message);
+            }
         }
 
         private void PushCommits()
         {
+            try
+            {
+                Provider.Push();
+            }
+            catch (SourceControlException ex)
+            {
+                RaiseErrorEvent(ex.Message);
+            }
         }
 
         private void SyncCommits()
         {
+            try
+            {
+                Provider.Pull();
+                Provider.Push();
+            }
+            catch (SourceControlException ex)
+            {
+                RaiseErrorEvent(ex.Message);
+            }
         }
 
         private readonly ICommand _fetchCommitsCommand;
@@ -99,6 +131,16 @@ namespace Rubberduck.UI.SourceControl
             get
             {
                 return _syncCommitsCommand;
+            }
+        }
+
+        public event EventHandler<ErrorEventArgs> ErrorThrown;
+        private void RaiseErrorEvent(string message)
+        {
+            var handler = ErrorThrown;
+            if (handler != null)
+            {
+                handler(this, new ErrorEventArgs(message));
             }
         }
     }

@@ -1,4 +1,6 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Input;
 using Rubberduck.SourceControl;
 using Rubberduck.UI.Command;
@@ -30,7 +32,37 @@ namespace Rubberduck.UI.SourceControl
         public ISourceControlProvider Provider
         {
             get { return _provider; }
-            set { _provider = value; }
+            set
+            {
+                _provider = value;
+
+                _provider.BranchChanged += Provider_BranchChanged;
+
+                CurrentBranch = Provider.CurrentBranch.Name;
+
+                var fileStats = Provider.Status().ToList();
+
+                IncludedChanges = new ObservableCollection<IFileStatusEntry>(fileStats.Where(stat => stat.FileStatus.HasFlag(FileStatus.Modified)));
+                UntrackedFiles = new ObservableCollection<IFileStatusEntry>(fileStats.Where(stat => stat.FileStatus.HasFlag(FileStatus.Untracked)));
+            }
+        }
+
+        private void Provider_BranchChanged(object sender, System.EventArgs e)
+        {
+            CurrentBranch = Provider.CurrentBranch.Name;
+        }
+
+        private string _currentBranch;
+        public string CurrentBranch
+        {
+            get { return _currentBranch; }
+            set {
+                if (_currentBranch != value)
+                {
+                    _currentBranch = value;
+                    OnPropertyChanged();
+                } 
+            }
         }
 
         public CommitAction CommitAction { get; set; }
@@ -79,6 +111,34 @@ namespace Rubberduck.UI.SourceControl
 
         private void Commit()
         {
+            var changes = IncludedChanges.Select(c => c.FilePath).ToList();
+            if (!changes.Any())
+            {
+                return;
+            }
+
+            try
+            {
+                Provider.Stage(changes);
+                Provider.Commit(CommitMessage);
+
+                if (CommitAction == CommitAction.CommitAndSync)
+                {
+                    Provider.Pull();
+                    Provider.Push();
+                }
+
+                if (CommitAction == CommitAction.CommitAndPush)
+                {
+                    Provider.Push();
+                }
+
+                CommitMessage = string.Empty;
+            }
+            catch (SourceControlException ex)
+            {
+                RaiseErrorEvent(ex.Message);
+            }
         }
 
         private readonly ICommand _commitCommand;
@@ -87,6 +147,16 @@ namespace Rubberduck.UI.SourceControl
             get
             {
                 return _commitCommand;
+            }
+        }
+
+        public event EventHandler<ErrorEventArgs> ErrorThrown;
+        private void RaiseErrorEvent(string message)
+        {
+            var handler = ErrorThrown;
+            if (handler != null)
+            {
+                handler(this, new ErrorEventArgs(message));
             }
         }
     }
